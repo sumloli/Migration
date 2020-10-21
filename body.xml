@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<apisecuritydefaults>
+  <apisecuritydefault>
+    <type>directrouting</type>
+    <threshold>0xFFFFFFFFFFFFFFFF</threshold>
+    <interval>3600</interval>
+    <thresholdaction>0</thresholdaction>
+    <nextdefaultaction>0</nextdefaultaction>
+	</apisecuritydefault>
+  <apisecuritydefault>
+    <type>routingrequests</type>
+    <threshold>0xFFFFFFFFFFFFFFFF</threshold>
+    <interval>3600</interval>
+    <thresholdaction>0</thresholdaction>
+    <nextdefaultaction>0</nextdefaultaction>
+	</apisecuritydefault>
+  <apisecuritydefault>
+    <type>servicerouting</type>
+    <threshold>0xFFFFFFFFFFFFFFFF</threshold>
+    <interval>3600</interval>
+    <thresholdaction>0</thresholdaction>
+    <nextdefaultaction>0</nextdefaultaction>
+	</apisecuritydefault>
+</apisecuritydefaults>
