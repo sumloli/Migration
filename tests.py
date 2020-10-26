@@ -31,10 +31,10 @@ try:
     with open('body.xml', 'r') as f:
         body = f.read()
     add = make_request('POST', MMS, '/cm/cfgparams/defaultxmls', params={'moaftype': '1', 'moduletype': '0x002',
-                                                                         'moduleconfigtype': 'TEST_apisecuritydefaults.xml',
+                                                                         'moduleconfigtype': 'TESTapisecuritydefaults.xml',
                                                                          'iversion': '001.00.00',
                                                                          'name': 'TEST_apisecuritydefaults',
-                                                                         'description': 'TEST_dmytro',
+                                                                         'description': 'TESTdmytro',
                                                                          'roleuser': 'Test'}, body=body)[1]
     print(json.loads(add))
     print(type(json.loads(add)))
