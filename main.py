@@ -1,6 +1,8 @@
 import requests
 import json
 import paramiko
+import xmltodict
+from pprint import pprint
 import urllib3
 urllib3.disable_warnings()
 
@@ -35,11 +37,50 @@ def make_request(method, base, path, headers=None, params=None, body=None):
 def download(ip, filename, path):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(ip, username="root", password="strom")
+    try:
+        ssh.connect(ip, username="root", password="strom")
+    except Exception as e:
+        print(e)
+        print("It doesn't seem to be Prague's VM \nTrying to use RU credentials instead")
+        ssh.connect(ip, username="dboriso", password="B52-a418-C949")
     sftp = ssh.open_sftp()
     sftp.get(path+filename, filename, callback=lambda x, y: print(f'{filename} transferred: {x/y*100:.0f}%'))
     sftp.close()
     ssh.close()
 
 
+def get_modules(omm_ip):
+    try:
+        download(ip=omm_ip, filename='module_registry.xml', path='/opt/sts/omm/')
+        print('DOWNLOADED SUCCESSFULLY')
+    except Exception as e:
+        print('"downloading module_registry.xml from OMM" FAILED')
+        print(e)
+    with open("module_registry.xml") as xml_file:
+        data_dict = xmltodict.parse(xml_file.read())
+        xml_file.close()
+        data = json.loads(json.dumps(data_dict['ModuleRegistry']['Modules']['BUS']))
+        data_json = json.dumps(data_dict['ModuleRegistry']['Modules']['BUS'])
+        with open("data.json", "w") as json_file:
+            json_file.write(data_json)
+            json_file.close()
+    pprint(data)
+    print('DATATYPE:'+str(type(data)))
+    return data
+
+
+def module_from_midtype(midtype):
+    if midtype in midtypes:
+        new = midtype.replace(midtype, f"{midtypes['0x000']}(0x000), {midtypes[midtype]}({midtype})")
+    elif midtype is None:
+        new = f"{midtypes['0x000']}(0x000)"
+    else:
+        new = 'Wrong midtype'
+    return new
+
+
 MMS = 'https://10.240.151.78'
+OMM = '10.97.155.51'
+midtypes = {"0x000": "BUS", "0x002": "OMM", "0x003": "TTS", "0x006": "RES", "0x007": "SCAQI", "0x011": "DPA",
+            "0x012": "CPA", "0x013": "IPA", "0x030": "STG", "0x034": "STA", "0x080": "MDP", "0x201": "BSAN",
+            "0x211": "TTSNew", "0x212": "MDPI", "0x5EE": "SEE", "0xED5": "EDP"}
