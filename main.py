@@ -1,3 +1,5 @@
+import os
+import time
 import requests
 import json
 import paramiko
@@ -34,7 +36,16 @@ def make_request(method, base, path, headers=None, params=None, body=None):
     return [response, response.text, headers]
 
 
-def download(ip, filename, path):
+def download(ip, filename, remotepath, localpath=''):
+    path = os.getcwd()
+    if localpath != '':
+        try:
+            if not os.path.exists(path+localpath):
+                os.makedirs(path+localpath)
+        except OSError:
+            print(f"Creation of the directory {path+localpath} failed")
+        else:
+            print(f"Directory {path+localpath}")
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
@@ -44,14 +55,14 @@ def download(ip, filename, path):
         print("It doesn't seem to be Prague's VM \nTrying to use RU credentials instead")
         ssh.connect(ip, username="dboriso", password="B52-a418-C949")
     sftp = ssh.open_sftp()
-    sftp.get(path+filename, filename, callback=lambda x, y: print(f'{filename} transferred: {x/y*100:.0f}%'))
+    sftp.get(remotepath+filename, path+localpath+filename, callback=lambda x, y: print(f'{filename} transferred: {x/y*100:.0f}%'))
     sftp.close()
     ssh.close()
 
 
 def get_modules(omm_ip):
     try:
-        download(ip=omm_ip, filename='module_registry.xml', path='/opt/sts/omm/')
+        download(ip=omm_ip, filename='module_registry.xml', remotepath='/opt/sts/omm/')
         print('DOWNLOADED SUCCESSFULLY')
     except Exception as e:
         print('"downloading module_registry.xml from OMM" FAILED')
@@ -69,6 +80,42 @@ def get_modules(omm_ip):
     return data
 
 
+def get_default_cfgs_list(ip, module):
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    try:
+        ssh.connect(ip, username="root", password="strom")
+    except Exception as e:
+        print(e)
+        print("It doesn't seem to be Prague's VM \nTrying to use RU credentials instead")
+        ssh.connect(ip, username="dboriso", password="B52-a418-C949")
+    sftp = ssh.open_sftp()
+    list_of_cfgs = sftp.listdir(f'/opt/sts/{module}/defaultcfg')
+    print(list_of_cfgs)
+    sftp.close()
+    ssh.close()
+    return list_of_cfgs
+
+
+def get_actual_cfgs_list(ip, module):
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    try:
+        ssh.connect(ip, username="root", password="strom")
+    except Exception as e:
+        print(e)
+        print("It doesn't seem to be Prague's VM \nTrying to use RU credentials instead")
+        ssh.connect(ip, username="dboriso", password="B52-a418-C949")
+    sftp = ssh.open_sftp()
+    list_of_files = sftp.listdir(f'/opt/sts/{module}')
+    print(list_of_files)
+    list_of_cfgs = [cfg for cfg in list_of_files if cfg.endswith(".xml")]
+    print(list_of_cfgs)
+    sftp.close()
+    ssh.close()
+    return list_of_cfgs
+
+
 def module_from_midtype(midtype):
     if midtype in midtypes:
         new = midtype.replace(midtype, f"{midtypes['0x000']}(0x000), {midtypes[midtype]}({midtype})")
@@ -78,6 +125,18 @@ def module_from_midtype(midtype):
         new = 'Wrong midtype'
     return new
 
+
+def download_cfgs(ip, module):
+    for cfg in get_default_cfgs_list(ip, module):
+        print(f'Trying to download {cfg}')
+        download(ip=ip, filename=cfg, remotepath=f'/opt/sts/{module}/defaultcfg/',
+                 localpath=f'/platform/{module}[{ip}]/defaultcfg/')
+        print(f'Downloaded {cfg}')
+    for cfg in get_actual_cfgs_list(ip, module):
+        print(f'Trying to download {cfg}')
+        download(ip=ip, filename=cfg, remotepath=f'/opt/sts/{module}/',
+                 localpath=f'/platform/{module}[{ip}]/actualtcfg/')
+        print(f'Downloaded {cfg}')
 
 MMS = 'https://10.240.151.78'
 OMM = '10.97.155.51'

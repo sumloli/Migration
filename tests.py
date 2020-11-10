@@ -71,7 +71,7 @@ except Exception as e:
 print('\nDEBUG FUNCTION:')
 print('DEBUG FUNCTION "downloading file":')
 try:
-    download(ip='10.240.151.112', filename='tts.pcap', path='/opt/sts/')
+    download(ip='10.240.151.112', filename='tts.pcap', remotepath='/opt/sts/')
     print('SUCCESS')
 except Exception as e:
     print('"downloading file" FAILED')
@@ -79,7 +79,7 @@ except Exception as e:
 print('\nDEBUG FUNCTION:')
 print('DEBUG FUNCTION "downloading module_registry.xml from OMM":')
 try:
-    download(ip='10.97.155.51', filename='module_registry.xml', path='/opt/sts/omm/')
+    download(ip='10.97.155.51', filename='module_registry.xml', remotepath='/opt/sts/omm/')
     print('SUCCESS')
 except Exception as e:
     print('"downloading module_registry.xml from OMM" FAILED')
@@ -92,4 +92,13 @@ try:
     print('SUCCESS')
 except Exception as e:
     print('"receiving modules list" FAILED')
+    print(e)
+print('\nDEBUG FUNCTION:')
+print('DEBUG FUNCTION "download configurations":')
+try:
+    download_cfgs('10.240.250.149', 'bus')
+    download_cfgs('10.240.250.149', 'omm')
+    print('SUCCESS')
+except Exception as e:
+    print('"download configuration')
     print(e)
