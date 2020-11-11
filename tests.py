@@ -79,7 +79,8 @@ except Exception as e:
 print('\nDEBUG FUNCTION:')
 print('DEBUG FUNCTION "downloading module_registry.xml from OMM":')
 try:
-    download(ip='10.97.155.51', filename='module_registry.xml', remotepath='/opt/sts/omm/')
+    # download(ip='10.97.155.51', filename='module_registry.xml', remotepath='/opt/sts/omm/')
+    download(ip='10.240.206.111', filename='module_registry.xml', remotepath='/opt/sts/omm/')
     print('SUCCESS')
 except Exception as e:
     print('"downloading module_registry.xml from OMM" FAILED')

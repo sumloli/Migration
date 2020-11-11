@@ -46,6 +46,8 @@ def download(ip, filename, remotepath, localpath=''):
             print(f"Creation of the directory {path+localpath} failed")
         else:
             print(f"Directory {path+localpath}")
+    else:
+        localpath = '/'
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
@@ -139,7 +141,8 @@ def download_cfgs(ip, module):
         print(f'Downloaded {cfg}')
 
 MMS = 'https://10.240.151.78'
-OMM = '10.97.155.51'
+#OMM = '10.240.206.111'
+OMM = '10.240.250.149'
 midtypes = {"0x000": "BUS", "0x002": "OMM", "0x003": "TTS", "0x006": "RES", "0x007": "SCAQI", "0x011": "DPA",
             "0x012": "CPA", "0x013": "IPA", "0x030": "STG", "0x034": "STA", "0x080": "MDP", "0x201": "BSAN",
             "0x211": "TTSNew", "0x212": "MDPI", "0x5EE": "SEE", "0xED5": "EDP"}
