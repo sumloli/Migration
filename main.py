@@ -9,7 +9,6 @@ import urllib3
 urllib3.disable_warnings()
 
 
-
 def main():
     tme = time.localtime()
     with open("log.txt", 'w') as logfile:
@@ -20,7 +19,7 @@ def jprint(obj):
     text = json.dumps(json.loads(obj), sort_keys=False, indent=4)
     print(text)
 
-
+# rest
 def make_request(method, base, path, headers=None, params=None, body=None):
     try:
         auth = requests.request('POST', f'{MMS}/global/activeusers', auth=('dmytro', 'dmytro'), verify=False)
@@ -40,9 +39,9 @@ def make_request(method, base, path, headers=None, params=None, body=None):
     except requests.exceptions.HTTPError as errh:
         print("Http Error:", errh)
         response = None
-    return [response, response.text, headers]
+    return [response, response.text, headers] #
 
-
+# file
 def download(ip, filename, remotepath, localpath=''):
     path = os.getcwd()
     if localpath != '':
@@ -68,7 +67,42 @@ def download(ip, filename, remotepath, localpath=''):
     sftp.close()
     ssh.close()
 
+# file
+def upload(ip, filename, remotepath, localpath=''):
+    path = os.getcwd()
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    try:
+        ssh.connect(ip, username="root", password="strom")
+    except Exception as e:
+        print(e)
+        print("It doesn't seem to be Prague's VM \nTrying to use RU credentials instead")
+        ssh.connect(ip, username="dboriso", password="B52-a418-C949")
+    sftp = ssh.open_sftp()
+    try:
+        sftp.chdir(remotepath)  # Test if remote_path exists
+    except IOError:
+        sftp.mkdir(remotepath)  # Create remote_path
+        sftp.chdir(remotepath)
+    sftp.put(localpath=path+localpath+filename, remotepath=remotepath+filename,
+             callback=lambda x, y: print(f' transferred: {x / y * 100:.0f}%'))
+    sftp.close()
+    ssh.close()
 
+# platform
+def rollback(platform):
+    folders_list = [f for f in os.listdir(platform) if not f.startswith('.')]
+    print(folders_list)
+    for folder in folders_list:
+        print(f'Module: {folder}')
+        ip = folder.split('[')[1][:-1].upper()
+        print(ip)
+        for cfg in os.listdir(f'{platform}/{folder}/actualcfg'):
+            print(cfg)
+            print(f"upload({ip}, filename={cfg}, remotepath='/opt/sts/testmigration_{folder.split('[')[0].lower()}/', localpath='/{platform}/{folder}/actualcfg/')")
+            upload(ip, filename=cfg, remotepath=f'/opt/sts/testmigration_{folder.split("[")[0].lower()}/', localpath=f'/{platform}/{folder}/actualcfg/')
+
+# platform
 def get_modules(omm_ip):
     try:
         download(ip=omm_ip, filename='module_registry.xml', remotepath='/opt/sts/omm/')
@@ -197,6 +231,8 @@ def download_all_platform_cfgs(omm):
             with open("log.txt", 'a') as logfile:
                 logfile.write(f'{time.strftime("%m/%d/%y %H:%M:%S", tme)}   ------    {vm.get("@IP1")} is Windows\n')
 
+def get_modstate():
+    pass
 
 def import_default_cfgs(platform):
     # platform is platform folder name after download
@@ -206,33 +242,35 @@ def import_default_cfgs(platform):
         print(f'Module: {folder}')
         print(f"{folder.split('[')[0].upper()}")
         for cfg in os.listdir(f"{platform}/{folder}/defaultcfg"):
-            print('\n\n'+cfg)
-            print('\n"POST defaultxml":')
-            try:
-                with open(f"{platform}/{folder}/defaultcfg/{cfg}", 'rb') as f:
-                    body = f.read()
-                    print(f'{platform}/{folder}/defaultcfg/{cfg}')
-                    # print(f'opening cfg: {body}')
-                add = make_request('POST', MMS, '/cm/cfgparams/defaultxmls',
-                                   params={'moaftype': '1',
-                                           'moduletype': midtype_from_module(folder.split('[')[0].upper()),
-                                           'moduleconfigtype': cfg,
-                                           'iversion': '001.00.00',
-                                           'name': f'TESTMIGRATION_DEFAULT_{cfg}',
-                                           'description': 'TESTMIGRATION_dmytro',
-                                           'roleuser': 'Test'}, body=body)[1]
-                print(json.loads(add))
-                print(type(json.loads(add)))
-                id = json.loads(add)['Id']
-                print(f'id: {id}')
-                print('SUCCESS')
-            except Exception as e:
-                print('"POST defaultxml" FAILED')
-                print(e)
-                tme = time.localtime()
-                with open("log.txt", 'a') as logfile:
-                    logfile.write(
-                        f'{time.strftime("%m/%d/%y %H:%M:%S", tme)}   ------  {platform}/{folder}/defaultcfg/{cfg}  {e}\n')
+            ignored_cfgs = ['endpoints.xml', 'peers.xml', 'peer_router_rules.xml']
+            if cfg not in ignored_cfgs:
+                print('\n\n'+cfg)
+                print('\n"POST defaultxml":')
+                try:
+                    with open(f"{platform}/{folder}/defaultcfg/{cfg}", 'rb') as f:
+                        body = f.read()
+                        print(f'{platform}/{folder}/defaultcfg/{cfg}')
+                        # print(f'opening cfg: {body}')
+                    add = make_request('POST', MMS, '/cm/cfgparams/defaultxmls',
+                                       params={'moaftype': '1',
+                                               'moduletype': midtype_from_module(folder.split('[')[0].upper()),
+                                               'moduleconfigtype': cfg,
+                                               'iversion': '001.00.00',
+                                               'name': f'TESTMIGRATION_DEFAULT_{cfg}',
+                                               'description': 'TESTMIGRATION_dmytro',
+                                               'roleuser': 'Test'}, body=body)[1]
+                    print(json.loads(add))
+                    print(type(json.loads(add)))
+                    id = json.loads(add)['Id']
+                    print(f'id: {id}')
+                    print('SUCCESS')
+                except Exception as e:
+                    print('"POST defaultxml" FAILED')
+                    print(e)
+                    tme = time.localtime()
+                    with open("log.txt", 'a') as logfile:
+                        logfile.write(
+                            f'{time.strftime("%m/%d/%y %H:%M:%S", tme)}   ------  {platform}/{folder}/defaultcfg/{cfg}  {e}\n')
 
 
 def create_profile_import_xml(platform):
@@ -242,76 +280,81 @@ def create_profile_import_xml(platform):
         print(f'Module: {folder}')
         print(f"{folder.split('[')[0].upper()}")
         for cfg in os.listdir(f"{platform}/{folder}/defaultcfg"):
-            print('\n\n'+cfg)
-            print('\n"Create and add xml to profile":')
-            if os.path.isfile(f'{platform}/{folder}/actualcfg/{cfg}'):
-                print('Actual cfg found!')
-                try:
-                    add_profile = make_request('POST', MMS, '/cm/profiles',
-                                               params={
-                                                   'name': f'TESTMIGRATION_ACTUAL_{cfg}',
-                                                   'moaftype': '1',
-                                                   'moduletype': midtype_from_module(folder.split('[')[0].upper()),
-                                                   'moduleconfigtype': cfg,
-                                                   'priority': '1',
-                                                   'description': 'TESTMIGRATION_dmytro',
-                                                   'roleuser': 'Test'})[1]
-                    print(json.loads(add_profile))
-                    print(type(json.loads(add_profile)))
-                    id = json.loads(add_profile)['Result']['Id']
-                    print(f'id: {id}')
-                    print('SUCCESSFULLY CREATED PROFILE')
-                    with open(f"{platform}/{folder}/actualcfg/{cfg}", 'rb') as f:
-                        body = f.read()
-                        print(body)
-                    import_xml_to_profile = make_request('POST', MMS, '/cm/cfgparams/importxmls',
-                                                         params={'profileid': id,
-                                                                 'iversion': '001.00.00',
-                                                                 'roleuser': 'Test'}, body=body)[1]
-                    print(json.loads(import_xml_to_profile))
-                    print(type(json.loads(import_xml_to_profile)))
-                    print('SUCCESSFULLY ADDED XML TO PROFILE(ACTUAL)')
-                except Exception as e:
-                    print('"Create and add xml to profile" FAILED')
-                    print(e)
-                    tme = time.localtime()
-                    with open("log.txt", 'a') as logfile:
-                        logfile.write(
-                            f'{time.strftime("%m/%d/%y %H:%M:%S", tme)}   ------  {platform}/{folder}/actualcfg/{cfg}  {e}\n')
-            else:
-                print('Actual cfg NOT found!')
-                try:
-                    add_profile = make_request('POST', MMS, '/cm/profiles',
-                                               params={
-                                                   'name': f'TESTMIGRATION_ACTUAL_{cfg}',
-                                                   'moaftype': '1',
-                                                   'moduletype': midtype_from_module(folder.split('[')[0].upper()),
-                                                   'moduleconfigtype': cfg,
-                                                   'priority': '1',
-                                                   'description': 'TESTMIGRATION_dmytro',
-                                                   'roleuser': 'Test'})[1]
-                    print(json.loads(add_profile))
-                    print(type(json.loads(add_profile)))
-                    id = json.loads(add_profile)['Result']['Id']
-                    print(f'id: {id}')
-                    print('SUCCESSFULLY CREATED PROFILE')
-                    with open(f"{platform}/{folder}/defaultcfg/{cfg}", 'rb') as f:
-                        body = f.read()
-                        print(body)
-                    import_xml_to_profile = make_request('POST', MMS, '/cm/cfgparams/importxmls',
-                                                         params={'profileid': id,
-                                                                 'iversion': '001.00.00',
-                                                                 'roleuser': 'Test'}, body=body)[1]
-                    print(json.loads(import_xml_to_profile))
-                    print(type(json.loads(import_xml_to_profile)))
-                    print('SUCCESSFULLY ADDED XML TO PROFILE(DEFAULT)')
-                except Exception as e:
-                    print('"POST defaultxml" FAILED')
-                    print(e)
-                    tme = time.localtime()
-                    with open("log.txt", 'a') as logfile:
-                        logfile.write(
-                            f'{time.strftime("%m/%d/%y %H:%M:%S", tme)}   ------  {platform}/{folder}/defaultcfg/{cfg}  {e}\n')
+            ignored_cfgs = ['endpoints.xml', 'peers.xml', 'peer_router_rules.xml']
+            if cfg not in ignored_cfgs:
+                print('\n\n'+cfg)
+                print('\n"Create and add xml to profile":')
+                if os.path.isfile(f'{platform}/{folder}/actualcfg/{cfg}'):
+                    print('Actual cfg found!')
+                    try:
+                        add_profile = make_request('POST', MMS, '/cm/profiles',
+                                                   params={
+                                                       'name': f'TESTMIGRATION_ACTUAL_{cfg}',
+                                                       'moaftype': '1',
+                                                       'moduletype': midtype_from_module(folder.split('[')[0].upper()),
+                                                       'moduleconfigtype': cfg,
+                                                       'priority': '1',
+                                                       'description': 'TESTMIGRATION_dmytro',
+                                                       'roleuser': 'Test'})[1]
+                        print(json.loads(add_profile))
+                        print(type(json.loads(add_profile)))
+                        id = json.loads(add_profile)['Result']['Id']
+                        print(f'id: {id}')
+                        print('SUCCESSFULLY CREATED PROFILE')
+                        with open(f"{platform}/{folder}/actualcfg/{cfg}", 'rb') as f:
+                            body = f.read()
+                            print(body)
+                        import_xml_to_profile = make_request('POST', MMS, '/cm/cfgparams/importxmls',
+                                                             params={'profileid': id,
+                                                                     'iversion': '001.00.00',
+                                                                     'roleuser': 'Test'}, body=body)[1]
+                        print(json.loads(import_xml_to_profile))
+                        print(type(json.loads(import_xml_to_profile)))
+                        print('SUCCESSFULLY ADDED XML TO PROFILE(ACTUAL)')
+                        # add here:
+                        # add module to profile (mand: profile id, opt: module id (-1))
+                        # module id have to be -1
+                    except Exception as e:
+                        print('"Create and add xml to profile" FAILED')
+                        print(e)
+                        tme = time.localtime()
+                        with open("log.txt", 'a') as logfile:
+                            logfile.write(
+                                f'{time.strftime("%m/%d/%y %H:%M:%S", tme)}   ------  {platform}/{folder}/actualcfg/{cfg}  {e}\n')
+                else:
+                    print('Actual cfg NOT found!')
+                    # try:
+                    #     add_profile = make_request('POST', MMS, '/cm/profiles',
+                    #                                params={
+                    #                                    'name': f'TESTMIGRATION_ACTUAL_{cfg}',
+                    #                                    'moaftype': '1',
+                    #                                    'moduletype': midtype_from_module(folder.split('[')[0].upper()),
+                    #                                    'moduleconfigtype': cfg,
+                    #                                    'priority': '1',
+                    #                                    'description': 'TESTMIGRATION_dmytro',
+                    #                                    'roleuser': 'Test'})[1]
+                    #     print(json.loads(add_profile))
+                    #     print(type(json.loads(add_profile)))
+                    #     id = json.loads(add_profile)['Result']['Id']
+                    #     print(f'id: {id}')
+                    #     print('SUCCESSFULLY CREATED PROFILE')
+                    #     with open(f"{platform}/{folder}/defaultcfg/{cfg}", 'rb') as f:
+                    #         body = f.read()
+                    #         print(body)
+                    #     import_xml_to_profile = make_request('POST', MMS, '/cm/cfgparams/importxmls',
+                    #                                          params={'profileid': id,
+                    #                                                  'iversion': '001.00.00',
+                    #                                                  'roleuser': 'Test'}, body=body)[1]
+                    #     print(json.loads(import_xml_to_profile))
+                    #     print(type(json.loads(import_xml_to_profile)))
+                    #     print('SUCCESSFULLY ADDED XML TO PROFILE(DEFAULT)')
+                    # except Exception as e:
+                    #     print('"POST defaultxml" FAILED')
+                    #     print(e)
+                    #     tme = time.localtime()
+                    #     with open("log.txt", 'a') as logfile:
+                    #         logfile.write(
+                    #             f'{time.strftime("%m/%d/%y %H:%M:%S", tme)}   ------  {platform}/{folder}/defaultcfg/{cfg}  {e}\n')
 
 
 MMS = 'https://10.240.151.78'
