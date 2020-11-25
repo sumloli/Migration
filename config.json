@@ -1,0 +1,30 @@
+{
+  "servers": [
+    {
+      "name": "OMM",
+      "ip": [
+        "10.240.206.111"
+      ],
+      "credentials": [
+        {
+          "username": "root",
+          "password": "strom"
+        }
+      ]
+    },
+    {
+      "name": "MMS",
+      "ip": [
+        "10.240.151.78"
+      ],
+      "credentials": [
+        {
+          "username": "dmytro",
+          "password": "dmytro"
+        }
+      ],
+      "ruleuser": "test"
+    }
+  ],
+  "rollback": "no"
+}

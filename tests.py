@@ -1,10 +1,17 @@
-from main import *
+import main, rest, files, platforms
+import json
+
+main.main()
+
+def jprint(obj):
+    text = json.dumps(json.loads(obj), sort_keys=False, indent=4)
+    print(text)
 
 
 print('\nDEBUG FUNCTION:')
 print('DEBUG FUNCTION "GET version":')
 try:
-    print(make_request('GET', MMS, '/global/versions'))
+    print(rest.make_request('GET', main.mms, '/global/versions'))
     print('SUCCESS')
 except Exception as e:
     print('"GET version" FAILED')
@@ -13,7 +20,7 @@ except Exception as e:
 print('\nDEBUG FUNCTION:')
 print('DEBUG FUNCTION "GET db version":')
 try:
-    print(make_request('GET', MMS, '/global/versions', params={'id': 'db'}))
+    print(rest.make_request('GET', main.mms, '/global/versions', params={'id': 'db'}))
     print('SUCCESS')
 except Exception as e:
     print('"GET db version" FAILED')
@@ -22,7 +29,7 @@ except Exception as e:
 print('\nDEBUG FUNCTION:')
 print('DEBUG FUNCTION "GET modules":')
 try:
-    jprint(make_request('GET', MMS, '/mr/module', params={'roleuser': 'Test'})[1])
+    jprint(rest.make_request('GET', main.mms, '/mr/module', params={'roleuser': 'Test'})[1])
     print('SUCCESS')
 except Exception as e:
     print('"GET modules" FAILED')
@@ -33,7 +40,7 @@ print('DEBUG FUNCTION "POST defaultxml":')
 try:
     with open('body.xml', 'r') as f:
         body = f.read()
-    add = make_request('POST', MMS, '/cm/cfgparams/defaultxmls', params={'moaftype': '1', 'moduletype': '0x002',
+    add = rest.make_request('POST', main.mms, '/cm/cfgparams/defaultxmls', params={'moaftype': '1', 'moduletype': '0x002',
                                                                          'moduleconfigtype': 'TEST_apisecuritydefaults.xml',
                                                                          'iversion': '001.00.00',
                                                                          'name': 'TEST_apisecuritydefaults',
@@ -51,7 +58,7 @@ except Exception as e:
 print('\nDEBUG FUNCTION:')
 print('DEBUG FUNCTION "GET profile":')
 try:
-    get = make_request('GET', MMS, f'/cm/profiles/{id}', params={'roleuser': 'Test'})
+    get = rest.make_request('GET', main.mms, f'/cm/profiles/{id}', params={'roleuser': 'Test'})
     print(get)
     print('SUCCESS')
 except Exception as e:
@@ -61,7 +68,7 @@ except Exception as e:
 print('\nDEBUG FUNCTION:')
 print('DEBUG FUNCTION "DELETE profile":')
 try:
-    remove = make_request('DELETE', MMS, f'/cm/profiles/{id}', params={'roleuser': 'Test'})
+    remove = rest.make_request('DELETE', main.mms, f'/cm/profiles/{id}', params={'roleuser': 'Test'})
     print(remove)
     print('SUCCESS')
 except Exception as e:
@@ -71,7 +78,7 @@ except Exception as e:
 print('\nDEBUG FUNCTION:')
 print('DEBUG FUNCTION "downloading file":')
 try:
-    download(ip='10.240.151.112', filename='tts.pcap', remotepath='/opt/sts/')
+    files.download(ip='10.240.151.112', filename='tts.pcap', remotepath='/opt/sts/')
     print('SUCCESS')
 except Exception as e:
     print('"downloading file" FAILED')
@@ -80,26 +87,26 @@ print('\nDEBUG FUNCTION:')
 print('DEBUG FUNCTION "downloading module_registry.xml from OMM":')
 try:
     # download(ip='10.97.155.51', filename='module_registry.xml', remotepath='/opt/sts/omm/')
-    download(ip='10.240.206.111', filename='module_registry.xml', remotepath='/opt/sts/omm/')
+    files.download(ip='10.240.206.111', filename='module_registry.xml', remotepath='/opt/sts/omm/')
     print('SUCCESS')
 except Exception as e:
     print('"downloading module_registry.xml from OMM" FAILED')
     print(e)
-print('\nDEBUG FUNCTION:')
-print('DEBUG FUNCTION "receiving modules list":')
-try:
-    for vm in get_modules(OMM):
-        print(f"Modules at {vm.get('@IP1')}: {module_from_midtype(vm.get('Module', {}).get('@MIDType'))}")
-    print('SUCCESS')
-except Exception as e:
-    print('"receiving modules list" FAILED')
-    print(e)
-print('\nDEBUG FUNCTION:')
-print('DEBUG FUNCTION "download configurations":')
-try:
-    download_cfgs('10.240.250.149', 'bus')
-    download_cfgs('10.240.250.149', 'omm')
-    print('SUCCESS')
-except Exception as e:
-    print('"download configuration')
-    print(e)
+# print('\nDEBUG FUNCTION:')
+# print('DEBUG FUNCTION "receiving modules list":')
+# try:
+#     for vm in platform.get_modules(main.omm):
+#         print(f"Modules at {vm.get('@IP1')}: {main.module_from_midtype(vm.get('Module', {}).get('@MIDType'))}")
+#     print('SUCCESS')
+# except Exception as e:
+#     print('"receiving modules list" FAILED')
+#     print(e)
+# print('\nDEBUG FUNCTION:')
+# print('DEBUG FUNCTION "download configurations":')
+# try:
+#     files.download_cfgs('10.240.250.149', 'bus')
+#     files.download_cfgs('10.240.250.149', 'omm')
+#     print('SUCCESS')
+# except Exception as e:
+#     print('"download configuration')
+#     print(e)
