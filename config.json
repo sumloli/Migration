@@ -15,15 +15,15 @@
     {
       "name": "MMS",
       "ip": [
-        "10.240.151.78"
+        "10.240.151.60"
       ],
       "credentials": [
         {
-          "username": "dmytro",
-          "password": "dmytro"
+          "username": "migration",
+          "password": "migration"
         }
       ],
-      "ruleuser": "test"
+      "roleuser": "migration"
     }
   ],
   "rollback": "no"

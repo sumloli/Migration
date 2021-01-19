@@ -5,7 +5,7 @@ import urllib3
 
 urllib3.disable_warnings()
 
-omm = mms = omm_username = omm_password = mms_username = mms_password = ...
+omm = mms = omm_username = omm_password = mms_username = mms_password = roleuser = ...
 
 
 def main():
@@ -15,6 +15,7 @@ def main():
     global omm_password
     global mms_username
     global mms_password
+    global roleuser
     tme = time.localtime()
     with open("log.txt", 'w') as logfile:
         logfile.write(f'{time.strftime("%m/%d/%y %H:%M:%S", tme)} setFlatCM started\n')
@@ -34,21 +35,42 @@ def main():
         # print(mms_username)
         mms_password = config_data['servers'][1]['credentials'][0]['password']
         # print(mms_password)
+        roleuser = config_data['servers'][1]['roleuser']
+        # print(roleuser)
         if config_data['rollback'] == 'yes':
-            platforms.rollback('platform_test_extended')
-    return omm, mms, omm_username, omm_password, mms_username, mms_password
+            platforms.rollback('platform')
+            print('Rollback done')
+            exit()
+    return omm, mms, omm_username, omm_password, mms_username, mms_password, roleuser
+
+
+def initialize():
+    # main step-by-step program run
+    # creating json and import to DB
+    # mig = rest.migrate_db()
+    # print(mig)
+    #
+    # result = rest.import_db_data(mig)
+    # print(result)
+
+    # download cnfgs and import to db
+    files.download_all_platform_cfgs(omm)
+    rest.import_default_cfgs('platform')
+    rest.create_profile_import_xml('platform')
 
 
 if __name__ == "__main__":
     main()
-
+    initialize()
+else:
+    main()
 
 def module_from_midtype(midtype):
     midtypes = {"0x000": "BUS", "0x002": "OMM", "0x003": "TTS", "0x006": "RES", "0x007": "SCAQI", "0x011": "DPA",
                 "0x012": "CPA", "0x013": "IPA", "0x030": "STG", "0x034": "STA", "0x080": "MDP", "0x201": "BSAN",
                 "0x211": "TTSNew", "0x212": "MDPI", "0x5EE": "SEE", "0xED5": "EDP"}
     if midtype in midtypes:
-        new = midtype.replace()
+        new = midtype.replace(midtype, f"{midtypes[midtype]}")
     elif midtype is None:
         new = 'SEE'
     else:

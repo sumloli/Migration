@@ -17,8 +17,20 @@ def rollback(platform):
         print(ip)
         for cfg in os.listdir(f'{platform}/{folder}/actualcfg'):
             print(cfg)
+            if cfg == 'bus.ini':
+                # editing bus ini and uploading it with new parameters back
+                busini = f'{os.getcwd()}/{platform}/{folder}/actualcfg/bus.ini'
+                print(busini)
+                with open(busini, 'r') as f:
+                    lines = f.readlines()
+                    print(lines)
+                with open(busini, 'w') as f:
+                    for line in lines:
+                        line = line.replace('newcm=true', 'newcm=false')
+                        f.write(line)
+                        print(line)
             # print(f"upload({ip}, filename={cfg}, remotepath='/opt/sts/testmigration_{folder.split('[')[0].lower()}/', localpath='/{platform}/{folder}/actualcfg/')")
-            files.upload(ip, filename=cfg, remotepath=f'/opt/sts/testmigration_{folder.split("[")[0].lower()}/', localpath=f'/{platform}/{folder}/actualcfg/')
+            files.upload(ip, filename=cfg, remotepath=f'/opt/sts/{folder.split("[")[0].lower()}/', localpath=f'/{platform}/{folder}/actualcfg/')
 
 
 def get_modules(omm_ip):
@@ -79,6 +91,8 @@ def get_actual_cfgs_list(ip, module):
     list_of_files = sftp.listdir(f'/opt/sts/{module}')
     print(list_of_files)
     list_of_cfgs = [cfg for cfg in list_of_files if cfg.endswith(".xml")]
+    if 'bus.xml' in list_of_cfgs:
+        list_of_cfgs.append('bus.ini')
     print(list_of_cfgs)
     sftp.close()
     ssh.close()

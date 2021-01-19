@@ -1,7 +1,7 @@
 import os
 import time
 import paramiko
-import main, platforms
+import main, platforms, files
 
 
 def download(ip, filename, remotepath, localpath=''):
@@ -73,6 +73,21 @@ def download_cfgs(ip, module):
                 download(ip=ip, filename=cfg, remotepath=f'/opt/sts/{module}/',
                          localpath=f'/platform/{module}[{ip}]/actualcfg/')
                 print(f'Downloaded {cfg}')
+                if cfg == 'bus.ini':
+                    print('!!!!!!!!!!!!bus.ini found!!!!!!!!!!!!!!!!!')
+                    # editing bus ini and uploading it with new parameters back
+                    busini = f'{os.getcwd()}/platform/{module}[{ip}]/actualcfg/bus.ini'
+                    print(busini)
+                    with open(busini, 'r', encoding='cp1252') as f:
+                        lines = f.readlines()
+                        print(lines)
+                    with open(busini, 'w') as f:
+                        for line in lines:
+                            line = line.replace('newcm=false', 'newcm=true')
+                            f.write(line)
+                            print(line)
+                    files.upload(ip, filename='bus.ini', remotepath=f'/opt/sts/{module}/',
+                                 localpath=f'/platform/{module}[{ip}]/actualcfg/')
 
 
 def download_all_platform_cfgs(omm):

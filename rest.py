@@ -7,7 +7,7 @@ import main
 
 def make_request(method, base, path, headers=None, params=None, body=None):
     try:
-        auth = requests.request('POST', f'{main.mms}/global/activeusers', auth=('dmytro', 'dmytro'), verify=False)
+        auth = requests.request('POST', f'{main.mms}/global/activeusers', auth=(main.mms_username, main.mms_password), verify=False)
         if auth.status_code == 201:
             print('Successfully authorized')
         auth.raise_for_status()
@@ -54,7 +54,7 @@ def import_default_cfgs(platform):
                                                    iversion='001.00.00',
                                                    name=f'TESTMIGRATION_DEFAULT_{folder.split("[")[0].upper()}_{cfg}',
                                                    description='TESTMIGRATION_dmytro',
-                                                   roleuser='Test'),
+                                                   roleuser=main.roleuser),
                                        body=body)[1]
                     print(json.loads(add))
                     print(type(json.loads(add)))
@@ -72,6 +72,7 @@ def import_default_cfgs(platform):
 
 
 def create_profile_import_xml(platform):
+    # platform is platform folder name after download
     folders_list = [f for f in os.listdir(platform) if not f.startswith('.')]
     print(folders_list)
     for folder in folders_list:
@@ -134,3 +135,21 @@ def create_profile_import_xml(platform):
                                 f'{time.strftime("%m/%d/%y %H:%M:%S", tme)}   ------  {platform}/{folder}/actualcfg/{cfg}  {e}\n')
                 else:
                     print('Actual cfg NOT found!')
+
+
+def migrate_db():
+    print('\nConverting EXPORT into JSON\n')
+    result = make_request('POST', main.mms, f'/system/migrateoldcm', params=dict(path='/opt/sts/mms/Migration', roleuser='migration'))[1]
+    print(result)
+    result_json = json.loads(result)
+    return result_json['FileResultInFo']['filepath']
+
+
+def import_db_data(json_path):
+    start_time = time.time()
+    print('\nUploading JSON to DB\n')
+    result = make_request('POST', main.mms, f'/system/import', params=dict(filepath=json_path, roleuser='migration'))[1]
+    print(result)
+    result_json = json.loads(result)
+    print(f"\nUploading took {time.time() - start_time} seconds ---\n")
+    return result_json
