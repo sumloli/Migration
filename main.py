@@ -55,8 +55,8 @@ def initialize():
 
     # download cnfgs and import to db
     files.download_all_platform_cfgs(omm)
-    rest.import_default_cfgs('platform')
-    rest.create_profile_import_xml('platform')
+    # rest.import_default_cfgs('platform')
+    # rest.create_profile_import_xml('platform')
 
 
 if __name__ == "__main__":

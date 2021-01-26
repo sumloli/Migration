@@ -1,7 +1,7 @@
 import os
 import time
 import paramiko
-import main, platforms, files
+import main, platforms
 
 
 def download(ip, filename, remotepath, localpath=''):
@@ -86,7 +86,7 @@ def download_cfgs(ip, module):
                             line = line.replace('newcm=false', 'newcm=true')
                             f.write(line)
                             print(line)
-                    files.upload(ip, filename='bus.ini', remotepath=f'/opt/sts/{module}/',
+                    upload(ip, filename='bus.ini', remotepath=f'/opt/sts/{module}/',
                                  localpath=f'/platform/{module}[{ip}]/actualcfg/')
 
 
