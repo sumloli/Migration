@@ -111,3 +111,18 @@ def download_all_platform_cfgs(omm):
             tme = time.localtime()
             with open("log.txt", 'a') as logfile:
                 logfile.write(f'{time.strftime("%m/%d/%y %H:%M:%S", tme)}   ------    {vm.get("@IP1")} is Windows\n')
+
+
+def win_upload_check():
+    print('----------Waiting for Windows configs to be uploaded----------')
+    file_path = 'win.done'
+    try:
+        while not os.path.exists(file_path):
+            time.sleep(5)
+            print('*Ctrl+C to continue...*\n')
+    except KeyboardInterrupt:
+        print('\nContinuing w/o win configs')
+    # if os.path.isfile(file_path):
+    #     print('----------Win configs successfully uploaded, proceed----------')
+    # else:
+    #     raise ValueError("%s isn't a file!" % file_path)
