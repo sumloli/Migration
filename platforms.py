@@ -4,7 +4,7 @@ import time
 import xmltodict
 import paramiko
 from pprint import pprint
-import files
+import files, rest
 
 
 def rollback(platform):
@@ -97,3 +97,44 @@ def get_actual_cfgs_list(ip, module):
     sftp.close()
     ssh.close()
     return list_of_cfgs
+
+
+def resolve_dpa():
+    # function is finding DPAs in module_registry and finding matching module in DB
+    # returns list of dpas in format [ip, mid, id]
+    global dpas
+    d = get_modules("10.240.206.111")
+    print(d)
+    dpas = []
+    for _ in d:
+        print('_____________')
+
+        for k, v in _.items():
+            print(f'{k} :: {v}')
+            if type(v) == dict:
+                print('dictionary here')
+                for key, value in v.items():
+                    print(f'---{key} :: {value}')
+                    if key == '@MIDType' and value == '0x011':
+                        print('------DPA IS HERE')
+                        print(_)
+                        print(f"{_['@IP1']}")
+                        print(f"{_['@MID'].replace('0001', '0111')}")
+                        print("MAKING REQUEST TO REST API")
+                        r = rest.make_request('GET', 'https://10.240.151.60',
+                                         '/mr/module?moaftype=1&moduletype=0x011&roleuser=migration')
+                        modules = json.loads(r[1])
+                        print(modules)
+                        for i in modules['module']:
+                            ip = _['@IP1']
+                            print('_____________')
+                            print(i)
+                            print(f"---mid:{i['mid']} :: id:{i['id']}")
+                            print('_____________')
+                            mid = i['mid']
+                            id = str(i['id'])
+                            listt = [ip, mid, id]
+                            if _['@MID'].replace('0001', '0111') == mid:
+                                dpas.append(listt)
+        print('_____________')
+    return dpas

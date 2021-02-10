@@ -47,17 +47,16 @@ def main():
 def initialize():
     # main step-by-step program run
     # creating json and import to DB
-    # mig = rest.migrate_db()
-    # print(mig)
-    #
-    # result = rest.import_db_data(mig)
-    # print(result)
+    mig = rest.migrate_db()
+    print(mig)
+
+    result = rest.import_db_data(mig)
+    print(result)
 
     # download cnfgs and import to db
     files.download_all_platform_cfgs(omm)
-    files.win_upload_check()
-    # rest.import_default_cfgs('platform')
-    # rest.create_profile_import_xml('platform')
+    rest.import_default_cfgs('platform')
+    rest.create_profile_import_xml('platform')
 
 
 if __name__ == "__main__":

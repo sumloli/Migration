@@ -2,7 +2,7 @@ import requests
 import os
 import json
 import time
-import main
+import main, platforms
 
 
 def make_request(method, base, path, headers=None, params=None, body=None):
@@ -86,14 +86,25 @@ def create_profile_import_xml(platform):
                 if os.path.isfile(f'{platform}/{folder}/actualcfg/{cfg}'):
                     print('Actual cfg found!')
                     try:
-                        add_profile = make_request('POST', main.mms, '/cm/profiles',
-                                                   params=dict(name=f'TESTMIGRATION_ACTUAL_{folder.split("[")[0].upper()}_{cfg}',
-                                                               moaftype='1',
-                                                               moduletype=main.midtype_from_module(
-                                                                          folder.split('[')[0].upper()),
-                                                               moduleconfigtype=cfg,
-                                                               priority='1', description='TESTMIGRATION_dmytro',
-                                                               roleuser='Test'))[1]
+                        if cfg == 'local_peer.xml':
+                            add_profile = make_request('POST', main.mms, '/cm/profiles',
+                                                       params=dict(name=f'TESTMIGRATION_ACTUAL_{folder.split("[")[0].upper()}_{folder[-4:][:-1]}_{cfg}',
+                                                                   moaftype='1',
+                                                                   moduletype=main.midtype_from_module(
+                                                                              folder.split('[')[0].upper()),
+                                                                   moduleconfigtype=cfg,
+                                                                   priority='1', description='TESTMIGRATION_dmytro',
+                                                                   roleuser='migration'))[1]
+                        else:
+                            add_profile = make_request('POST', main.mms, '/cm/profiles',
+                                                       params=dict(
+                                                           name=f'TESTMIGRATION_ACTUAL_{folder.split("[")[0].upper()}_{cfg}',
+                                                           moaftype='1',
+                                                           moduletype=main.midtype_from_module(
+                                                               folder.split('[')[0].upper()),
+                                                           moduleconfigtype=cfg,
+                                                           priority='1', description='TESTMIGRATION_dmytro',
+                                                           roleuser='migration'))[1]
                         print(json.loads(add_profile))
                         print(type(json.loads(add_profile)))
                         id = json.loads(add_profile)['Result']['Id']
@@ -105,27 +116,48 @@ def create_profile_import_xml(platform):
                         import_xml_to_profile = make_request('POST', main.mms, '/cm/cfgparams/importxmls',
                                                              params=dict(profileid=id,
                                                                          iversion='001.00.00',
-                                                                         roleuser='Test'),
+                                                                         roleuser='migration'),
                                                              body=body)[1]
                         print(json.loads(import_xml_to_profile))
                         print(type(json.loads(import_xml_to_profile)))
                         print('SUCCESSFULLY ADDED XML TO PROFILE(ACTUAL)')
-                        try:
-                            print(f'\nAdding module to profile {id}')
-                            add = make_request('PUT', main.mms, f'/cm/profiles/{id}/module', params=dict(
-                                                                                                    moduleid='-1',
-                                                                                                    roleuser='Test'))[1]
-                            print(add)
-                            print(type(json.loads(add)))
-                            print(json.loads(add))
-                            print('SUCCESS')
-                        except Exception as e:
-                            print(f'Adding module to profile {id} FAILED')
-                            print(e)
-                            tme = time.localtime()
-                            with open("log.txt", 'a') as logfile:
-                                logfile.write(
-                                    f'{time.strftime("%m/%d/%y %H:%M:%S", tme)}   ------  {platform}/{folder}/actualcfg/{cfg}  {e}\n')
+                        if cfg == 'local_peer.xml':
+                            for _ in platforms.resolve_dpa():
+                                print(f"checking if {_[0]} = {folder.split('[')[1][:-1]}")
+                                if _[0] == folder.split('[')[1][:-1]:
+                                    try:
+                                        print(f'\nAdding module to profile {id}')
+                                        add = make_request('PUT', main.mms, f'/cm/profiles/{id}/module', params=dict(
+                                            moduleid=_[2],
+                                            roleuser='migration'))[1]
+                                        print(add)
+                                        print(type(json.loads(add)))
+                                        print(json.loads(add))
+                                        print('SUCCESS')
+                                    except Exception as e:
+                                        print(f'Adding module to profile {id} FAILED')
+                                        print(e)
+                                        tme = time.localtime()
+                                        with open("log.txt", 'a') as logfile:
+                                            logfile.write(
+                                                f'{time.strftime("%m/%d/%y %H:%M:%S", tme)}   ------  {platform}/{folder}/actualcfg/{cfg}  {e}\n')
+                        else:
+                            try:
+                                print(f'\nAdding module to profile {id}')
+                                add = make_request('PUT', main.mms, f'/cm/profiles/{id}/module', params=dict(
+                                                                                                        moduleid='-1',
+                                                                                                        roleuser='migration'))[1]
+                                print(add)
+                                print(type(json.loads(add)))
+                                print(json.loads(add))
+                                print('SUCCESS')
+                            except Exception as e:
+                                print(f'Adding module to profile {id} FAILED')
+                                print(e)
+                                tme = time.localtime()
+                                with open("log.txt", 'a') as logfile:
+                                    logfile.write(
+                                        f'{time.strftime("%m/%d/%y %H:%M:%S", tme)}   ------  {platform}/{folder}/actualcfg/{cfg}  {e}\n')
                     except Exception as e:
                         print('"Create and add xml to profile" FAILED')
                         print(e)
