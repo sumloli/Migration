@@ -86,15 +86,17 @@ def create_profile_import_xml(platform):
                 if os.path.isfile(f'{platform}/{folder}/actualcfg/{cfg}'):
                     print('Actual cfg found!')
                     try:
+                        pr = 0
                         if cfg == 'local_peer.xml':
+                            pr += 1
                             add_profile = make_request('POST', main.mms, '/cm/profiles',
                                                        params=dict(name=f'TESTMIGRATION_ACTUAL_{folder.split("[")[0].upper()}_{folder[-4:][:-1]}_{cfg}',
                                                                    moaftype='1',
                                                                    moduletype=main.midtype_from_module(
                                                                               folder.split('[')[0].upper()),
                                                                    moduleconfigtype=cfg,
-                                                                   priority='1', description='TESTMIGRATION_dmytro',
-                                                                   roleuser='migration'))[1]
+                                                                   priority=pr, description='TESTMIGRATION_dmytro',
+                                                                   roleuser=main.roleuser))[1]
                         else:
                             add_profile = make_request('POST', main.mms, '/cm/profiles',
                                                        params=dict(
@@ -104,7 +106,7 @@ def create_profile_import_xml(platform):
                                                                folder.split('[')[0].upper()),
                                                            moduleconfigtype=cfg,
                                                            priority='1', description='TESTMIGRATION_dmytro',
-                                                           roleuser='migration'))[1]
+                                                           roleuser=main.roleuser))[1]
                         print(json.loads(add_profile))
                         print(type(json.loads(add_profile)))
                         id = json.loads(add_profile)['Result']['Id']
@@ -129,7 +131,7 @@ def create_profile_import_xml(platform):
                                         print(f'\nAdding module to profile {id}')
                                         add = make_request('PUT', main.mms, f'/cm/profiles/{id}/module', params=dict(
                                             moduleid=_[2],
-                                            roleuser='migration'))[1]
+                                            roleuser=main.roleuser))[1]
                                         print(add)
                                         print(type(json.loads(add)))
                                         print(json.loads(add))
