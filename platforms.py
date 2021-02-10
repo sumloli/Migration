@@ -115,8 +115,8 @@ def resolve_dpa():
                 print('dictionary here')
                 for key, value in v.items():
                     print(f'---{key} :: {value}')
-                    if key == '@MIDType' and value == '0x011':
-                        print('------DPA IS HERE')
+                    if key == '@MIDType' and (value == '0x011' or value == '0xED5'):
+                        print('------DPA/EDP IS HERE')
                         print(_)
                         print(f"{_['@IP1']}")
                         print(f"{_['@MID'].replace('0001', '0111')}")
@@ -134,7 +134,7 @@ def resolve_dpa():
                             mid = i['mid']
                             id = str(i['id'])
                             listt = [ip, mid, id]
-                            if _['@MID'].replace('0001', '0111') == mid:
+                            if _['@MID'].replace('0001', '0111') == mid or _['@MID'].replace('0001', 'ED51') == mid:
                                 dpas.append(listt)
         print('_____________')
     return dpas
