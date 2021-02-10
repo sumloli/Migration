@@ -75,6 +75,7 @@ def create_profile_import_xml(platform):
     # platform is platform folder name after download
     folders_list = [f for f in os.listdir(platform) if not f.startswith('.')]
     print(folders_list)
+    pr = 0
     for folder in folders_list:
         print(f'Module: {folder}')
         print(f"{folder.split('[')[0].upper()}")
@@ -86,7 +87,6 @@ def create_profile_import_xml(platform):
                 if os.path.isfile(f'{platform}/{folder}/actualcfg/{cfg}'):
                     print('Actual cfg found!')
                     try:
-                        pr = 0
                         if cfg == 'local_peer.xml':
                             pr += 1
                             add_profile = make_request('POST', main.mms, '/cm/profiles',
