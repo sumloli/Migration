@@ -147,8 +147,12 @@ def resolve_dpa():
                             print(f"{_['@IP1']}")
                             print(f"{_['@MID'].replace('0001', '0111')}")
                             print("MAKING REQUEST TO REST API")
-                            r = rest.make_request('GET', 'https://10.240.151.60',
-                                                  '/mr/module?moaftype=1&moduletype=0x011&roleuser=migration')
+                            if value == '0x011':
+                                r = rest.make_request('GET', 'https://10.240.151.60',
+                                                      '/mr/module?moaftype=1&moduletype=0x011&roleuser=migration')
+                            else:
+                                r = rest.make_request('GET', 'https://10.240.151.60',
+                                                      '/mr/module?moaftype=1&moduletype=0xed5&roleuser=migration')
                             modules = json.loads(r[1])
                             print(modules)
                             for i in modules['module']:
