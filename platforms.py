@@ -139,7 +139,7 @@ def resolve_dpa():
             elif type(v) == list:
                 print('list here')
                 for module in v:
-                    for key, value in module:
+                    for key, value in module.items():
                         print(f'---{key} :: {value}')
                         if key == '@MIDType' and (value == '0x011' or value == '0xED5'):
                             print('------DPA/EDP IS HERE')
